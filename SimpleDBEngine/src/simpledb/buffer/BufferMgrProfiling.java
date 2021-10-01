@@ -101,6 +101,49 @@ public class BufferMgrProfiling {
         return new Result(bm.hits, bm.misses);
     }
 
+    public static Result selectTableTest(int n, boolean mode) throws SQLException {
+        EmbeddedDriver d = new EmbeddedDriver();
+        String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
+        Connection conn = d.connect(url, null);
+        Statement stmt = conn.createStatement();
+
+        // Debugging Setup
+        SimpleDB db = d.getDb();
+        BufferMgr bm = db.bufferMgr();
+        bm.setMode(mode);
+
+        String s = "create table STUDENT(SId int, SFirstName varchar(40), SLastName varchar(40), MajorId int, GradYear int)";
+        stmt.executeUpdate(s);
+        System.out.println("Table STUDENT created.");
+
+        ArrayList<Name> names = Name.generateNames(n);
+
+        s = "insert into STUDENT(SId, SFirstName, SLastName, MajorId, GradYear) values ";
+        String[] studvals = new String[n];
+
+        for (int i = 0; i < n; i++) {
+            studvals[i] = String.format("(%d, '%s', '%s', %d, %d)", (i + 1), names.get(i).firstName,
+                    names.get(i).lastName, rand.nextInt(courseNames.length), randomGradYear());
+        }
+        for (String studval : studvals) stmt.executeUpdate(s + studval);
+        System.out.println("STUDENT records inserted.");
+
+        bm.hits = 0;
+        bm.misses = 0; // Resetting to only observe count during join
+
+        s = "select SId, SFirstName, SLastName, MajorId " +
+                "from STUDENT";
+
+        ResultSet rs = stmt.executeQuery(s);
+        int count = 0;
+        while (rs.next()) {
+            count++;
+        } // Going through entire result set.
+
+        conn.close();
+        return new Result(bm.hits, bm.misses);
+    }
+
     /**
      * Specifies size of experiment
      */
@@ -135,10 +178,25 @@ public class BufferMgrProfiling {
         pw.close();
     }
 
+    /**
+     * Tests performance while joining Tables of various sizes, specified by nExperiments, with a constant size table.
+     * Performance of buffers is evaluated by hits and misses
+     */
+    public static void selectTableTests() throws FileNotFoundException, SQLException {
+        PrintWriter pw = new PrintWriter(new File("selectTable.csv"));
+        pw.println("mode,n,hits,misses,total");
+        for (int n : nExperiments) {
+            pw.println(selectTableTest(n, true).toString("MRU", n));
+            pw.println(selectTableTest(n, false).toString("default", n));
+        }
+        pw.close();
+    }
+
     public static void main(String[] args) {
         try {
-            createTableTests();
-            joinTableTests();
+//            createTableTests();
+//            joinTableTests();
+            selectTableTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
         }
