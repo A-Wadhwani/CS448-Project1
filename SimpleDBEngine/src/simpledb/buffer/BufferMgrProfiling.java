@@ -11,6 +11,7 @@ import java.sql.Driver;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.UUID;
 
@@ -45,6 +46,58 @@ public class BufferMgrProfiling {
         }
         for (String studval : studvals) stmt.executeUpdate(s + studval);
         System.out.println("STUDENT records inserted.");
+
+        conn.close();
+        return new Result(bm.hits, bm.misses);
+    }
+
+    public static Result joinTableTest(int n, boolean mode) throws SQLException {
+        EmbeddedDriver d = new EmbeddedDriver();
+        String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
+        Connection conn = d.connect(url, null);
+        Statement stmt = conn.createStatement();
+
+        // Debugging Setup
+        SimpleDB db = d.getDb();
+        BufferMgr bm = db.bufferMgr();
+        bm.setMode(mode);
+
+        String s = "create table STUDENT(SId int, SFirstName varchar(40), SLastName varchar(40), MajorId int, GradYear int)";
+        stmt.executeUpdate(s);
+        System.out.println("Table STUDENT created.");
+
+        ArrayList<Name> names = Name.generateNames(n);
+
+        s = "insert into STUDENT(SId, SFirstName, SLastName, MajorId, GradYear) values ";
+        String[] studvals = new String[n];
+
+        for (int i = 0; i < n; i++) {
+            studvals[i] = String.format("(%d, '%s', '%s', %d, %d)", (i + 1), names.get(i).firstName,
+                    names.get(i).lastName, rand.nextInt(courseNames.length), randomGradYear());
+        }
+        for (String studval : studvals) stmt.executeUpdate(s + studval);
+        System.out.println("STUDENT records inserted.");
+
+        s = "create table MAJOR(MId int, MajorName varchar(40), MajorAbbr varchar(5))";
+        stmt.executeUpdate(s);
+        System.out.println("Table MAJOR created.");
+
+        s = "insert into MAJOR(MId, MajorName, MajorAbbr) values ";
+        String[] majorvals = new String[courseNames.length];
+        for (int i = 0; i < courseNames.length; i++) {
+            majorvals[i] = String.format("(%d, '%s', '%s')", i, courseNames[i], courseAbs[i]);
+        }
+        for (String majorval : majorvals) stmt.executeUpdate(s + majorval);
+        System.out.println("MAJOR records inserted.");
+
+        bm.hits = 0;
+        bm.misses = 0; // Resetting to only observe count during join
+
+        s = "select SId, SFirstName, SLastName, MId, MajorName, MajorAbbr " +
+                "from STUDENT, MAJOR ";
+        stmt.executeQuery(s);
+
+        conn.close();
         return new Result(bm.hits, bm.misses);
     }
 
@@ -60,9 +113,10 @@ public class BufferMgrProfiling {
 
     public static void main(String[] args) {
         try {
-            createTableTests();
-
-        } catch (SQLException | FileNotFoundException throwables) {
+            // createTableTests();
+            System.out.println(joinTableTest(500, true).toString("MRU", 500));
+            System.out.println(joinTableTest(500, false).toString("default", 500));
+        } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
@@ -111,7 +165,7 @@ public class BufferMgrProfiling {
     private static final String[] courseNames = new String[]{"Computer Science", "Chemical Engineering",
             "Mechanical Engineering", "Aerospace Engineering", "Computer Engineering", "Electrical Engineering",
             "Environmental Engineering", "Biomedical Engineering", "Biology", "Physics", "Chemistry", "English",
-            "Psychology", "Economics", "Management", "Statistics", "French", "German", "Civil Engineering", "Art & Design"};
+            "Psychology", "Economics", "Management", "Statistics", "French", "German", "Civil Engineering", "Art Design"};
 
     private static final String[] courseAbs = new String[]{"CS", "CHE", "ME", "ASE", "ECE", "EE", "EEE", "BME", "BIO",
             "PHY", "CHM", "ENG", "PSY", "ECON", "MGMT", "STAT", "FRE", "GER", "CE", "ART"};
