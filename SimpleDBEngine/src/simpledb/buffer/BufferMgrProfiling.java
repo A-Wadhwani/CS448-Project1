@@ -7,10 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 public class BufferMgrProfiling {
 
@@ -251,9 +248,6 @@ public class BufferMgrProfiling {
         bm.hits = 0;
         bm.misses = 0; // Resetting to only observe count during join
 
-        s = "select SId, SFirstName, SLastName, MajorId " +
-                "from STUDENT";
-
         for (int i = 0; i < n * 0.75; i++) {
             String cmd = "update STUDENT "
                     + "set MajorId=" + rand.nextInt(courseNames.length) + " "
@@ -261,6 +255,55 @@ public class BufferMgrProfiling {
             stmt.executeUpdate(cmd);
         }
 
+        conn.close();
+        return new Result(bm.hits, bm.misses);
+    }
+
+    public static Result deleteFromTableTest(int n, boolean mode) throws SQLException {
+        EmbeddedDriver d = new EmbeddedDriver();
+        String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
+        //Makes new database each time
+        Connection conn = d.connect(url, null);
+        Statement stmt = conn.createStatement();
+
+        // Debugging Setup
+        SimpleDB db = d.getDb();
+        BufferMgr bm = db.bufferMgr();
+        bm.setMode(mode);
+
+        String s = "create table STUDENT(SId int, SFirstName varchar(40), " +
+                "SLastName varchar(40), MajorId int, GradYear int)";
+        stmt.executeUpdate(s);
+        System.out.println("Table STUDENT created.");
+
+        ArrayList<Name> names = Name.generateNames(n);
+
+        s = "insert into STUDENT(SId, SFirstName, SLastName, MajorId, GradYear) values ";
+        String[] studvals = new String[n];
+
+        for (int i = 0; i < n; i++) {
+            studvals[i] = String.format("(%d, '%s', '%s', %d, %d)", (i + 1), names.get(i).firstName,
+                    names.get(i).lastName, rand.nextInt(courseNames.length), randomGradYear());
+        }
+        for (String studval : studvals) stmt.executeUpdate(s + studval);
+        System.out.println("STUDENT records inserted.");
+
+        bm.hits = 0;
+        bm.misses = 0; // Resetting to only observe count during join
+
+        for (int i = 0; i < n * 0.25; i++) {
+            int index = rand.nextInt(names.size());
+            s = "delete from STUDENT "
+                    + "where SFirstName = '" + names.get(index).firstName + "'";
+            names.remove(index);
+            stmt.executeUpdate(s);
+        }
+
+        // Larger Removals
+
+        s = "delete from STUDENT "
+                + "where GradYear = " + randomGradYear();
+        stmt.executeUpdate(s);
         conn.close();
         return new Result(bm.hits, bm.misses);
     }
@@ -340,13 +383,29 @@ public class BufferMgrProfiling {
         pw.close();
     }
 
+    /**
+     * Tests performance while removing values in tables of various sizes
+     */
+    public static void deleteFromTableTests() throws FileNotFoundException, SQLException {
+        PrintWriter pw = new PrintWriter("deleteFromTable.csv");
+        pw.println("mode,n,hits,misses,total");
+        for (int n : nExperiments) {
+            if (n > 300)
+                return;
+            pw.println(deleteFromTableTest(n, true).toString("MRU", n));
+            pw.println(deleteFromTableTest(n, false).toString("default", n));
+        }
+        pw.close();
+    }
+
     public static void main(String[] args) {
         try {
-            createTableTests();
-            joinTableTests();
-            selectTableTests();
-            largeJoinTableTests();
-            updateTableTests();
+//            createTableTests();
+//            joinTableTests();
+//            selectTableTests();
+//            largeJoinTableTests();
+//            updateTableTests();
+            deleteFromTableTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
         }
@@ -410,17 +469,27 @@ public class BufferMgrProfiling {
             this.lastName = lastName;
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Name name = (Name) o;
+            return Objects.equals(firstName, name.firstName) && Objects.equals(lastName, name.lastName);
+        }
+
         public static ArrayList<Name> generateNames(int n) {
             ArrayList<Name> names = new ArrayList<>();
             int c1 = 0;
             int c2 = 0;
             n = Math.min(n, firstNameList.length * lastNameList.length);
             for (int i = 0; i < n; i++) {
-                if (c1 == firstNameList.length) {
-                    c1 = 0;
-                    c2++;
+                Name name = new Name(firstNameList[rand.nextInt(firstNameList.length)],
+                        lastNameList[rand.nextInt(lastNameList.length)]);
+                while (names.contains(name)) {
+                    name = new Name(firstNameList[rand.nextInt(firstNameList.length)],
+                            lastNameList[rand.nextInt(lastNameList.length)]);
                 }
-                names.add(new Name(firstNameList[c1++], lastNameList[c2]));
+                names.add(name);
             }
             return names;
         }

@@ -85,6 +85,8 @@ public class BufferMgr {
                     modifiedPool.add(buff);
                 else
                     unmodifiedPool.add(buff);
+                assert unmodifiedPool.size() <= bufferpool.length;
+                assert modifiedPool.size() <= bufferpool.length;
             } else {
                 numAvailable++;
             }
