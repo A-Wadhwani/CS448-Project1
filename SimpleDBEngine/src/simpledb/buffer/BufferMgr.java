@@ -3,160 +3,183 @@ package simpledb.buffer;
 import simpledb.file.*;
 import simpledb.log.LogMgr;
 
-import java.util.ArrayList;
-
 /**
  * Manages the pinning and unpinning of buffers to blocks.
- * @author Edward Sciore
  *
+ * @author Edward Sciore
  */
 public class BufferMgr {
-   private Buffer[] bufferpool;
-   private int numAvailable;
+    private Buffer[] bufferpool;
+    private int numAvailable;
 
-   // Along with bufferPool, we have two new pools to handle MRU
-   // For both pools, used buffers move to the end of the array and are dequeued from the end.
-   // We will reference elements from `bufferPool` in both of the new pools.
+    // Along with bufferPool, we have two new pools to handle MRU
+    // For both pools, used buffers move to the end of the array and are dequeued from the end.
+    // We will reference elements from `bufferPool` in both of the new pools.
 
-   // For unpinned elements that haven't been modified. All buffers start here.
-   private Buffer[] unmodifiedPool;
-   private int unmodNumAvailable;
+    // For unpinned elements that haven't been modified. All buffers start here.
+    private Buffer[] unmodifiedPool;
+    private int unmodNumAvailable;
 
-   // For unpinned elements that have modified buffers.
-   private Buffer[] modifiedPool;
-   private int modNumAvailable;
+    // For unpinned elements that have modified buffers.
+    private Buffer[] modifiedPool;
+    private int modNumAvailable;
 
-   private static final long MAX_TIME = 10000; // 10 seconds
+    private static final long MAX_TIME = 1000; // 10 seconds
+    // For testing purposes:
+    boolean isMRU = true;
 
-   /**
-    * Creates a buffer manager having the specified number 
-    * of buffer slots.
-    * This constructor depends on a {@link FileMgr} and
-    * {@link simpledb.log.LogMgr LogMgr} object.
-    * @param numbuffs the number of buffer slots to allocate
-    */
-   public BufferMgr(FileMgr fm, LogMgr lm, int numbuffs) {
-      bufferpool = new Buffer[numbuffs];
-      modifiedPool = new Buffer[numbuffs];
-      unmodifiedPool = new Buffer[numbuffs];
-      numAvailable = numbuffs;
-      unmodNumAvailable = numbuffs;
-      modNumAvailable = 0;
-      for (int i=0; i<numbuffs; i++) {
-         bufferpool[i] = new Buffer(fm, lm);
-         unmodifiedPool[i] = bufferpool[i]; // In the beginning, all buffers are unpinned and unmodified.
-      }
-   }
-   
-   /**
-    * Returns the number of available (i.e. unpinned) buffers.
-    * @return the number of available buffers
-    */
-   public synchronized int available() {
-      return unmodNumAvailable + modNumAvailable;
-   }
-   
-   /**
-    * Flushes the dirty buffers modified by the specified transaction.
-    * @param txnum the transaction's id number
-    */
-   public synchronized void flushAll(int txnum) {
-      for (Buffer buff : bufferpool)
-         if (buff.modifyingTx() == txnum)
-         buff.flush();
-   }
-   
-   
-   /**
-    * Unpins the specified data buffer. If its pin count
-    * goes to zero, then notify any waiting threads.
-    * @param buff the buffer to be unpinned
-    */
-   public synchronized void unpin(Buffer buff) {
-      buff.unpin();
-      if (!buff.isPinned()) { // Buffer is not used now
-         if (buff.isModified())
-            modifiedPool[modNumAvailable++] = buff;
-         else
-            unmodifiedPool[unmodNumAvailable++] = buff;
-         notifyAll();
-      }
-   }
-   
-   /**
-    * Pins a buffer to the specified block, potentially
-    * waiting until a buffer becomes available.
-    * If no buffer becomes available within a fixed 
-    * time period, then a {@link BufferAbortException} is thrown.
-    * @param blk a reference to a disk block
-    * @return the buffer pinned to that block
-    */
-   public synchronized Buffer pin(BlockId blk) {
-      try {
-         long timestamp = System.currentTimeMillis();
-         Buffer buff = tryToPin(blk);
-         while (buff == null && !waitingTooLong(timestamp)) {
-            wait(MAX_TIME);
-            buff = tryToPin(blk);
-         }
-         if (buff == null)
-            throw new BufferAbortException();
-         return buff;
-      }
-      catch(InterruptedException e) {
-         throw new BufferAbortException();
-      }
-   }  
-   
-   private boolean waitingTooLong(long starttime) {
-      return System.currentTimeMillis() - starttime > MAX_TIME;
-   }
-   
-   /**
-    * Tries to pin a buffer to the specified block. 
-    * If there is already a buffer assigned to that block
-    * then that buffer is used;  
-    * otherwise, an unpinned buffer from the pool is chosen.
-    * Returns a null value if there are no available buffers.
-    * @param blk a reference to a disk block
-    * @return the pinned buffer
-    */
-   private Buffer tryToPin(BlockId blk) {
-      Buffer buff = findExistingBuffer(blk);
-      if (buff == null) {
-         buff = chooseUnpinnedBuffer();
-         if (buff == null)
-            return null;
-         buff.assignToBlock(blk);
-      }
-      if (!buff.isPinned()){
-         if (buff.isModified())
-            modNumAvailable--; // Perhaps make previous element null for debugging
-         else
-            unmodNumAvailable--;
-      }
-      buff.pin();
-      return buff;
-   }
-   
-   private Buffer findExistingBuffer(BlockId blk) { // Inefficient
-      for (Buffer buff : bufferpool) {
-         BlockId b = buff.block();
-         if (b != null && b.equals(blk))
+    /**
+     * Creates a buffer manager having the specified number
+     * of buffer slots.
+     * This constructor depends on a {@link FileMgr} and
+     * {@link simpledb.log.LogMgr LogMgr} object.
+     *
+     * @param numbuffs the number of buffer slots to allocate
+     */
+    public BufferMgr(FileMgr fm, LogMgr lm, int numbuffs) {
+        bufferpool = new Buffer[numbuffs];
+        modifiedPool = new Buffer[numbuffs];
+        unmodifiedPool = new Buffer[numbuffs];
+        numAvailable = numbuffs;
+        unmodNumAvailable = numbuffs;
+        modNumAvailable = 0;
+        for (int i = 0; i < numbuffs; i++) {
+            bufferpool[i] = new Buffer(fm, lm);
+            unmodifiedPool[i] = bufferpool[i]; // In the beginning, all buffers are unpinned and unmodified.
+        }
+    }
+
+    /**
+     * Returns the number of available (i.e. unpinned) buffers.
+     *
+     * @return the number of available buffers
+     */
+    public synchronized int available() {
+        return isMRU ? unmodNumAvailable + modNumAvailable : numAvailable;
+    }
+
+    /**
+     * Flushes the dirty buffers modified by the specified transaction.
+     *
+     * @param txnum the transaction's id number
+     */
+    public synchronized void flushAll(int txnum) {
+        for (Buffer buff : bufferpool)
+            if (buff.modifyingTx() == txnum)
+                buff.flush();
+    }
+
+
+    /**
+     * Unpins the specified data buffer. If its pin count
+     * goes to zero, then notify any waiting threads.
+     *
+     * @param buff the buffer to be unpinned
+     */
+    public synchronized void unpin(Buffer buff) {
+        buff.unpin();
+        if (!buff.isPinned()) { // Buffer is not used now
+            if (isMRU) {
+                if (buff.isModified())
+                    modifiedPool[modNumAvailable++] = buff;
+                else
+                    unmodifiedPool[unmodNumAvailable++] = buff;
+            } else {
+                numAvailable++;
+            }
+            notifyAll();
+        }
+    }
+
+    /**
+     * Pins a buffer to the specified block, potentially
+     * waiting until a buffer becomes available.
+     * If no buffer becomes available within a fixed
+     * time period, then a {@link BufferAbortException} is thrown.
+     *
+     * @param blk a reference to a disk block
+     * @return the buffer pinned to that block
+     */
+    public synchronized Buffer pin(BlockId blk) {
+        try {
+            long timestamp = System.currentTimeMillis();
+            Buffer buff = tryToPin(blk);
+            while (buff == null && !waitingTooLong(timestamp)) {
+                wait(MAX_TIME);
+                buff = tryToPin(blk);
+            }
+            if (buff == null)
+                throw new BufferAbortException();
             return buff;
-      }
-      return null;
-   }
+        } catch (InterruptedException e) {
+            throw new BufferAbortException();
+        }
+    }
 
-   /**
-    * MRU policy will be implemented here
-    */
-   private Buffer chooseUnpinnedBuffer() {
-      if (unmodNumAvailable != 0){
-         return unmodifiedPool[unmodNumAvailable - 1];
-      } else if (modNumAvailable != 0){
-         return modifiedPool[modNumAvailable - 1];
-      }
-      return null;
-   }
+    private boolean waitingTooLong(long starttime) {
+        return System.currentTimeMillis() - starttime > MAX_TIME;
+    }
+
+    /**
+     * Tries to pin a buffer to the specified block.
+     * If there is already a buffer assigned to that block
+     * then that buffer is used;
+     * otherwise, an unpinned buffer from the pool is chosen.
+     * Returns a null value if there are no available buffers.
+     *
+     * @param blk a reference to a disk block
+     * @return the pinned buffer
+     */
+    private Buffer tryToPin(BlockId blk) {
+        Buffer buff = findExistingBuffer(blk);
+        if (buff == null) {
+            buff = chooseUnpinnedBuffer();
+            if (buff == null)
+                return null;
+            buff.assignToBlock(blk);
+        }
+        if (!buff.isPinned()) {
+            if (isMRU) {
+                if (buff.isModified())
+                    modNumAvailable--; // Perhaps make previous element null for debugging
+                else
+                    unmodNumAvailable--;
+            } else {
+                numAvailable--;
+            }
+        }
+        buff.pin();
+        return buff;
+    }
+
+    private Buffer findExistingBuffer(BlockId blk) { // Inefficient
+        for (Buffer buff : bufferpool) {
+            BlockId b = buff.block();
+            if (b != null && b.equals(blk))
+                return buff;
+        }
+        return null;
+    }
+
+    /**
+     * MRU policy mostly be implemented here
+     */
+    private Buffer chooseUnpinnedBuffer() {
+        if (isMRU) {
+            if (unmodNumAvailable != 0) {
+                return unmodifiedPool[unmodNumAvailable - 1]; // Priority to unmodified buffers
+            } else if (modNumAvailable != 0) {
+                return modifiedPool[modNumAvailable - 1];
+            }
+        } else {
+            for (Buffer buff : bufferpool)
+                if (!buff.isPinned())
+                    return buff;
+        }
+        return null;
+    }
+
+    public void setMode(boolean isMRU) {
+        this.isMRU = isMRU;
+    }
 }
