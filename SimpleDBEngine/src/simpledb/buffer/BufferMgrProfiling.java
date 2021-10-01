@@ -14,9 +14,6 @@ import java.util.UUID;
 
 public class BufferMgrProfiling {
 
-    final static int[] nExperiments = new int[]{20, 40, 60, 80, 100, 140, 180, 220, 260, 300, 350, 400, 450, 500, 550,
-            600, 650, 750, 800, 850, 900, 950, 1000};
-
     public static Result createTableTest(int n, boolean mode) throws SQLException {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
@@ -104,6 +101,16 @@ public class BufferMgrProfiling {
         return new Result(bm.hits, bm.misses);
     }
 
+    /**
+     * Specifies size of experiment
+     */
+    final static int[] nExperiments = new int[]{20, 40, 60, 80, 100, 140, 180, 220, 260, 300, 350, 400, 450, 500, 550,
+            600, 650, 750, 800, 850, 900, 950, 1000};
+
+    /**
+     * Tests performance while Creating Tables of various sizes, specified by nExperiments
+     * Performance of buffers is evaluated by hits and misses
+     */
     public static void createTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter(new File("createTable.csv"));
         pw.println("mode,n,hits,misses,total");
@@ -114,6 +121,10 @@ public class BufferMgrProfiling {
         pw.close();
     }
 
+    /**
+     * Tests performance while joining Tables of various sizes, specified by nExperiments, with a constant size table.
+     * Performance of buffers is evaluated by hits and misses
+     */
     public static void joinTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter(new File("joinTable.csv"));
         pw.println("mode,n,hits,misses,total");
@@ -126,7 +137,7 @@ public class BufferMgrProfiling {
 
     public static void main(String[] args) {
         try {
-            // createTableTests();
+            createTableTests();
             joinTableTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
