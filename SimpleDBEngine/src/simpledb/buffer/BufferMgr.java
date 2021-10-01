@@ -3,6 +3,8 @@ package simpledb.buffer;
 import simpledb.file.*;
 import simpledb.log.LogMgr;
 
+import java.util.ArrayList;
+
 /**
  * Manages the pinning and unpinning of buffers to blocks.
  * @author Edward Sciore
@@ -11,8 +13,18 @@ import simpledb.log.LogMgr;
 public class BufferMgr {
    private Buffer[] bufferpool;
    private int numAvailable;
+
+   // Instead of bufferPool, we have two new pools to handle MRU
+   // For unpinned elements that haven't been modified. All buffers start here.
+   private Buffer[] unmodifiedPool;
+   private int unmodNumAvailable;
+
+   // For unpinned elements that have modified buffers.
+   private Buffer[] modifiedPool;
+   private int modNumAvailable;
+
    private static final long MAX_TIME = 10000; // 10 seconds
-   
+
    /**
     * Creates a buffer manager having the specified number 
     * of buffer slots.
@@ -53,7 +65,7 @@ public class BufferMgr {
     */
    public synchronized void unpin(Buffer buff) {
       buff.unpin();
-      if (!buff.isPinned()) {
+      if (!buff.isPinned()) { // Buffer is not used now
          numAvailable++;
          notifyAll();
       }
@@ -70,7 +82,7 @@ public class BufferMgr {
    public synchronized Buffer pin(BlockId blk) {
       try {
          long timestamp = System.currentTimeMillis();
-         Buffer buff = tryToPin(blk);
+         Buffer buff = tryToPin(blk); // Takes buffer from `bufferpool[]` and assigns it to block
          while (buff == null && !waitingTooLong(timestamp)) {
             wait(MAX_TIME);
             buff = tryToPin(blk);
@@ -119,11 +131,14 @@ public class BufferMgr {
       }
       return null;
    }
-   
+
+   /**
+    * MRU policy will be implemented here
+    */
    private Buffer chooseUnpinnedBuffer() {
       for (Buffer buff : bufferpool)
          if (!buff.isPinned())
          return buff;
-      return null;
+      return null; // Currently taking first unpinned block
    }
 }

@@ -97,4 +97,11 @@ public class Buffer {
    void unpin() {
       pins--;
    }
+
+   /**
+    * @return `true` if the buffer is modified.
+    */
+   boolean isModified() {
+      return txnum >= 0;
+   }
 }
