@@ -308,6 +308,110 @@ public class BufferMgrProfiling {
         return new Result(bm.hits, bm.misses);
     }
 
+    public static Result randomizedTest(int n, boolean mode) throws SQLException {
+        EmbeddedDriver d = new EmbeddedDriver();
+        String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
+        //Makes new database each time
+        Connection conn = d.connect(url, null);
+        Statement stmt = conn.createStatement();
+
+        // Debugging Setup
+        SimpleDB db = d.getDb();
+        BufferMgr bm = db.bufferMgr();
+        bm.setMode(mode);
+
+        String s = "create table STUDENT(SId int, SFirstName varchar(40), " +
+                "SLastName varchar(40), MajorId int, GradYear int)";
+        stmt.executeUpdate(s);
+        System.out.println("Table STUDENT created.");
+
+        ArrayList<Name> names = Name.generateNames(3 * n);
+
+        s = "insert into STUDENT(SId, SFirstName, SLastName, MajorId, GradYear) values ";
+        String[] studvals = new String[n];
+
+        ArrayList<Integer> ids = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            studvals[i] = String.format("(%d, '%s', '%s', %d, %d)", (i + 1), names.get(0).firstName,
+                    names.get(0).lastName, rand.nextInt(courseNames.length), randomGradYear());
+            names.remove(0);
+            ids.add((i + 1));
+        }
+        for (String studval : studvals) stmt.executeUpdate(s + studval);
+        System.out.println("STUDENT records inserted.");
+
+        s = "create table MAJOR(MId int, MajorName varchar(40), MajorAbbr varchar(5))";
+        stmt.executeUpdate(s);
+        System.out.println("Table MAJOR created.");
+
+        s = "insert into MAJOR(MId, MajorName, MajorAbbr) values ";
+        String[] majorvals = new String[courseNames.length];
+        for (int i = 0; i < courseNames.length; i++) {
+            majorvals[i] = String.format("(%d, '%s', '%s')", i, courseNames[i], courseAbs[i]);
+        }
+        for (String majorval : majorvals) stmt.executeUpdate(s + majorval);
+        System.out.println("MAJOR records inserted.");
+
+        bm.hits = 0;
+        bm.misses = 0; // Resetting to only observe count during random tests now
+
+        int id = 0;
+        String cmd = "";
+
+        for (int i = 0; i < 2 * n; i++) {
+            switch (rand.nextInt(5)) {
+                case 0: // Insertion
+                    s = "insert into STUDENT(SId, SFirstName, SLastName, MajorId, GradYear) values " +
+                            String.format("(%d, '%s', '%s', %d, %d)", ids.get(ids.size() - 1) + 1, names.get(0).firstName,
+                                    names.get(0).lastName, rand.nextInt(courseNames.length), randomGradYear());
+                    names.remove(0);
+                    stmt.executeUpdate(s);
+                    ids.add(ids.get(ids.size() - 1) + 1);
+                    break;
+                case 1: // Update
+                    id = ids.get(rand.nextInt(ids.size()));
+                    cmd = "update STUDENT "
+                            + "set MajorId=" + rand.nextInt(courseNames.length) + " "
+                            + "where SId = " + id;
+                    stmt.executeUpdate(cmd);
+                    break;
+                case 2: // Selection
+                    id = ids.get(rand.nextInt(ids.size()));
+                    s = "select SId, SFirstName, SLastName " +
+                            "from STUDENT " +
+                            "where SId = " + id;
+
+                    ResultSet rs = stmt.executeQuery(s);
+                    int count = 0;
+                    while (rs.next()) {
+                        count++;
+                    } // Going through entire result set.
+                    break;
+                case 3: // Deletion
+                    id = ids.get(rand.nextInt(ids.size()));
+                    ids.remove(Integer.valueOf(id));
+                    cmd = "delete from STUDENT "
+                            + "where SId = " + id;
+                    stmt.executeUpdate(cmd);
+                    break;
+                case 4: // Join
+                    id = ids.get(rand.nextInt(ids.size()));
+                    s = "select SId, SFirstName, SLastName, MId, MajorName, MajorAbbr " +
+                            "from STUDENT, MAJOR " +
+                            "where SId = " + id;
+                    ResultSet rs1 = stmt.executeQuery(s);
+                    int count1 = 0;
+                    while (rs1.next()) {
+                        count1++;
+                    } // Going through entire result set.
+            }
+        }
+
+        conn.close();
+        return new Result(bm.hits, bm.misses);
+    }
+
     /**
      * Specifies size of experiment
      */
@@ -390,10 +494,21 @@ public class BufferMgrProfiling {
         PrintWriter pw = new PrintWriter("deleteFromTable.csv");
         pw.println("mode,n,hits,misses,total");
         for (int n : nExperiments) {
-            if (n > 300)
-                return;
             pw.println(deleteFromTableTest(n, true).toString("MRU", n));
             pw.println(deleteFromTableTest(n, false).toString("default", n));
+        }
+        pw.close();
+    }
+
+    /**
+     * Tests performance in randomized tasks
+     */
+    public static void randomizedTests() throws FileNotFoundException, SQLException {
+        PrintWriter pw = new PrintWriter("randomTests.csv");
+        pw.println("mode,n,hits,misses,total");
+        for (int n : nExperiments) {
+            pw.println(randomizedTest(n, true).toString("MRU", n));
+            pw.println(randomizedTest(n, false).toString("default", n));
         }
         pw.close();
     }
@@ -405,7 +520,8 @@ public class BufferMgrProfiling {
 //            selectTableTests();
 //            largeJoinTableTests();
 //            updateTableTests();
-            deleteFromTableTests();
+//            deleteFromTableTests();
+            randomizedTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
         }
