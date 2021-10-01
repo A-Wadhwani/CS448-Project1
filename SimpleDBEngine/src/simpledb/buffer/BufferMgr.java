@@ -14,7 +14,10 @@ public class BufferMgr {
    private Buffer[] bufferpool;
    private int numAvailable;
 
-   // Instead of bufferPool, we have two new pools to handle MRU
+   // Along with bufferPool, we have two new pools to handle MRU
+   // For both pools, used buffers move to the end of the array and are dequeued from the end.
+   // We will reference elements from `bufferPool` in both of the new pools.
+
    // For unpinned elements that haven't been modified. All buffers start here.
    private Buffer[] unmodifiedPool;
    private int unmodNumAvailable;
@@ -34,9 +37,15 @@ public class BufferMgr {
     */
    public BufferMgr(FileMgr fm, LogMgr lm, int numbuffs) {
       bufferpool = new Buffer[numbuffs];
+      modifiedPool = new Buffer[numbuffs];
+      unmodifiedPool = new Buffer[numbuffs];
       numAvailable = numbuffs;
-      for (int i=0; i<numbuffs; i++)
+      unmodNumAvailable = numbuffs;
+      modNumAvailable = 0;
+      for (int i=0; i<numbuffs; i++) {
          bufferpool[i] = new Buffer(fm, lm);
+         unmodifiedPool[i] = bufferpool[i]; // In the beginning, all buffers are unpinned and unmodified.
+      }
    }
    
    /**
@@ -44,7 +53,7 @@ public class BufferMgr {
     * @return the number of available buffers
     */
    public synchronized int available() {
-      return numAvailable;
+      return unmodNumAvailable + modNumAvailable;
    }
    
    /**
@@ -66,7 +75,10 @@ public class BufferMgr {
    public synchronized void unpin(Buffer buff) {
       buff.unpin();
       if (!buff.isPinned()) { // Buffer is not used now
-         numAvailable++;
+         if (buff.isModified())
+            modifiedPool[modNumAvailable++] = buff;
+         else
+            unmodifiedPool[unmodNumAvailable++] = buff;
          notifyAll();
       }
    }
@@ -82,7 +94,7 @@ public class BufferMgr {
    public synchronized Buffer pin(BlockId blk) {
       try {
          long timestamp = System.currentTimeMillis();
-         Buffer buff = tryToPin(blk); // Takes buffer from `bufferpool[]` and assigns it to block
+         Buffer buff = tryToPin(blk);
          while (buff == null && !waitingTooLong(timestamp)) {
             wait(MAX_TIME);
             buff = tryToPin(blk);
@@ -117,13 +129,17 @@ public class BufferMgr {
             return null;
          buff.assignToBlock(blk);
       }
-      if (!buff.isPinned())
-         numAvailable--;
+      if (!buff.isPinned()){
+         if (buff.isModified())
+            modNumAvailable--; // Perhaps make previous element null for debugging
+         else
+            unmodNumAvailable--;
+      }
       buff.pin();
       return buff;
    }
    
-   private Buffer findExistingBuffer(BlockId blk) {
+   private Buffer findExistingBuffer(BlockId blk) { // Inefficient
       for (Buffer buff : bufferpool) {
          BlockId b = buff.block();
          if (b != null && b.equals(blk))
@@ -136,9 +152,11 @@ public class BufferMgr {
     * MRU policy will be implemented here
     */
    private Buffer chooseUnpinnedBuffer() {
-      for (Buffer buff : bufferpool)
-         if (!buff.isPinned())
-         return buff;
-      return null; // Currently taking first unpinned block
+      if (unmodNumAvailable != 0){
+         return unmodifiedPool[unmodNumAvailable - 1];
+      } else if (modNumAvailable != 0){
+         return modifiedPool[modNumAvailable - 1];
+      }
+      return null;
    }
 }
