@@ -3,6 +3,8 @@ package simpledb.buffer;
 import simpledb.file.*;
 import simpledb.log.LogMgr;
 
+import java.util.ArrayList;
+
 /**
  * Manages the pinning and unpinning of buffers to blocks.
  *
@@ -17,16 +19,17 @@ public class BufferMgr {
     // We will reference elements from `bufferPool` in both of the new pools.
 
     // For unpinned elements that haven't been modified. All buffers start here.
-    private Buffer[] unmodifiedPool;
-    private int unmodNumAvailable;
+    private ArrayList<Buffer> unmodifiedPool;
 
     // For unpinned elements that have modified buffers.
-    private Buffer[] modifiedPool;
-    private int modNumAvailable;
+    private ArrayList<Buffer> modifiedPool;
 
-    private static final long MAX_TIME = 1000; // 10 seconds
+    private static final long MAX_TIME = 1000; // 1 second
+
     // For testing purposes:
-    boolean isMRU = true;
+    private boolean isMRU = true;
+    int hits = 0; // Number of times we had to read from disk
+    int misses = 0;
 
     /**
      * Creates a buffer manager having the specified number
@@ -38,14 +41,12 @@ public class BufferMgr {
      */
     public BufferMgr(FileMgr fm, LogMgr lm, int numbuffs) {
         bufferpool = new Buffer[numbuffs];
-        modifiedPool = new Buffer[numbuffs];
-        unmodifiedPool = new Buffer[numbuffs];
         numAvailable = numbuffs;
-        unmodNumAvailable = numbuffs;
-        modNumAvailable = 0;
+        unmodifiedPool = new ArrayList<>();
+        modifiedPool = new ArrayList<>();
         for (int i = 0; i < numbuffs; i++) {
             bufferpool[i] = new Buffer(fm, lm);
-            unmodifiedPool[i] = bufferpool[i]; // In the beginning, all buffers are unpinned and unmodified.
+            unmodifiedPool.add(bufferpool[i]); // In the beginning, all buffers are unpinned and unmodified.
         }
     }
 
@@ -55,7 +56,7 @@ public class BufferMgr {
      * @return the number of available buffers
      */
     public synchronized int available() {
-        return isMRU ? unmodNumAvailable + modNumAvailable : numAvailable;
+        return isMRU ? unmodifiedPool.size() + modifiedPool.size() : numAvailable;
     }
 
     /**
@@ -81,9 +82,9 @@ public class BufferMgr {
         if (!buff.isPinned()) { // Buffer is not used now
             if (isMRU) {
                 if (buff.isModified())
-                    modifiedPool[modNumAvailable++] = buff;
+                    modifiedPool.add(buff);
                 else
-                    unmodifiedPool[unmodNumAvailable++] = buff;
+                    unmodifiedPool.add(buff);
             } else {
                 numAvailable++;
             }
@@ -133,17 +134,20 @@ public class BufferMgr {
     private Buffer tryToPin(BlockId blk) {
         Buffer buff = findExistingBuffer(blk);
         if (buff == null) {
+            misses++; // We end up needing to read from file
             buff = chooseUnpinnedBuffer();
             if (buff == null)
                 return null;
             buff.assignToBlock(blk);
+        } else {
+            hits++; // We didn't have to read from file
         }
         if (!buff.isPinned()) {
             if (isMRU) {
                 if (buff.isModified())
-                    modNumAvailable--; // Perhaps make previous element null for debugging
+                    modifiedPool.remove(buff); // Perhaps make previous element null for debugging
                 else
-                    unmodNumAvailable--;
+                    unmodifiedPool.remove(buff);
             } else {
                 numAvailable--;
             }
@@ -166,10 +170,10 @@ public class BufferMgr {
      */
     private Buffer chooseUnpinnedBuffer() {
         if (isMRU) {
-            if (unmodNumAvailable != 0) {
-                return unmodifiedPool[unmodNumAvailable - 1]; // Priority to unmodified buffers
-            } else if (modNumAvailable != 0) {
-                return modifiedPool[modNumAvailable - 1];
+            if (unmodifiedPool.size() != 0) {
+                return unmodifiedPool.remove(unmodifiedPool.size() - 1); // Priority to unmodified buffers
+            } else if (modifiedPool.size() != 0) {
+                return modifiedPool.remove(modifiedPool.size() - 1);
             }
         } else {
             for (Buffer buff : bufferpool)
