@@ -6,10 +6,7 @@ import simpledb.server.SimpleDB;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -94,8 +91,14 @@ public class BufferMgrProfiling {
         bm.misses = 0; // Resetting to only observe count during join
 
         s = "select SId, SFirstName, SLastName, MId, MajorName, MajorAbbr " +
-                "from STUDENT, MAJOR ";
-        stmt.executeQuery(s);
+                "from STUDENT, MAJOR " +
+                "where MId = MajorId";
+
+        ResultSet rs = stmt.executeQuery(s);
+        int count = 0;
+        while (rs.next()) {
+            count++;
+        } // Going through entire result set.
 
         conn.close();
         return new Result(bm.hits, bm.misses);
@@ -111,12 +114,21 @@ public class BufferMgrProfiling {
         pw.close();
     }
 
+    public static void joinTableTests() throws FileNotFoundException, SQLException {
+        PrintWriter pw = new PrintWriter(new File("joinTable.csv"));
+        pw.println("mode,n,hits,misses,total");
+        for (int n : nExperiments) {
+            pw.println(joinTableTest(n, true).toString("MRU", n));
+            pw.println(joinTableTest(n, false).toString("default", n));
+        }
+        pw.close();
+    }
+
     public static void main(String[] args) {
         try {
             // createTableTests();
-            System.out.println(joinTableTest(500, true).toString("MRU", 500));
-            System.out.println(joinTableTest(500, false).toString("default", 500));
-        } catch (SQLException throwables) {
+            joinTableTests();
+        } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
         }
     }
