@@ -515,12 +515,12 @@ public class BufferMgrProfiling {
 
     public static void main(String[] args) {
         try {
-//            createTableTests();
-//            joinTableTests();
-//            selectTableTests();
-//            largeJoinTableTests();
-//            updateTableTests();
-//            deleteFromTableTests();
+            createTableTests();
+            joinTableTests();
+            largeJoinTableTests();
+            selectTableTests();
+            updateTableTests();
+            deleteFromTableTests();
             randomizedTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();

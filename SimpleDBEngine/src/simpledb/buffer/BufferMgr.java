@@ -173,9 +173,9 @@ public class BufferMgr {
     private Buffer chooseUnpinnedBuffer() {
         if (isMRU) {
             if (unmodifiedPool.size() != 0) {
-                return unmodifiedPool.remove(unmodifiedPool.size() - 1); // Priority to unmodified buffers
+                return unmodifiedPool.remove(0); // Priority to unmodified buffers
             } else if (modifiedPool.size() != 0) {
-                return modifiedPool.remove(modifiedPool.size() - 1);
+                return modifiedPool.remove(0);
             }
         } else {
             for (Buffer buff : bufferpool)
