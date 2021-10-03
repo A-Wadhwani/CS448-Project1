@@ -30,6 +30,7 @@ public class BufferMgr {
     private boolean isMRU = true;
     int hits = 0; // Number of times we had to read from disk
     int misses = 0;
+    static int discWrites = 0;
 
     /**
      * Creates a buffer manager having the specified number
@@ -48,6 +49,7 @@ public class BufferMgr {
             bufferpool[i] = new Buffer(fm, lm);
             unmodifiedPool.add(bufferpool[i]); // In the beginning, all buffers are unpinned and unmodified.
         }
+        discWrites = 0;
     }
 
     /**

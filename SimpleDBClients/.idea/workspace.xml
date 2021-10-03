@@ -6,8 +6,18 @@
   <component name="ChangeListManager">
     <list default="true" id="380b690f-0f8e-45f8-95cf-3f25b2150971" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/createTable.csv" beforeDir="false" afterPath="$PROJECT_DIR$/createTable.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deleteFromTable.csv" beforeDir="false" afterPath="$PROJECT_DIR$/deleteFromTable.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/joinTable.csv" beforeDir="false" afterPath="$PROJECT_DIR$/joinTable.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/largeJoinTable.csv" beforeDir="false" afterPath="$PROJECT_DIR$/largeJoinTable.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/randomTests.csv" beforeDir="false" afterPath="$PROJECT_DIR$/randomTests.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/selectTable.csv" beforeDir="false" afterPath="$PROJECT_DIR$/selectTable.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/updateTable.csv" beforeDir="false" afterPath="$PROJECT_DIR$/updateTable.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/Buffer.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/Buffer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgr.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgr.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrProfiling.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrProfiling.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/jdbc/embedded/EmbeddedDriver.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/jdbc/embedded/EmbeddedDriver.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +61,7 @@
     <property name="project.structure.side.proportion" value="0.0" />
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
   </component>
-  <component name="RunManager" selected="Application.BufferMgrProfiling">
+  <component name="RunManager" selected="Application.BufferMgrTest">
     <configuration name="BufferMgrProfiling" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="simpledb.buffer.BufferMgrProfiling" />
       <module name="SimpleDBEngine" />
@@ -91,24 +101,22 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="ArquillianTestNG" factoryName="" nameIsGenerated="true">
+    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
       <option name="arquillianRunConfiguration">
         <value>
           <option name="containerStateName" value="" />
         </value>
       </option>
-      <option name="TEST_OBJECT" value="CLASS" />
-      <properties />
-      <listeners />
+      <option name="TEST_OBJECT" value="class" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.BufferMgrTest" />
         <item itemvalue="Application.BufferMgrProfiling" />
         <item itemvalue="Application.CreateStudentDB" />
-        <item itemvalue="Application.BufferMgrTest" />
       </list>
     </recent_temporary>
   </component>
@@ -122,6 +130,8 @@
       <updated>1633054444182</updated>
       <workItem from="1633054445476" duration="12356000" />
       <workItem from="1633109655558" duration="8631000" />
+      <workItem from="1633200801323" duration="538000" />
+      <workItem from="1633209847082" duration="7072000" />
     </task>
     <servers />
   </component>

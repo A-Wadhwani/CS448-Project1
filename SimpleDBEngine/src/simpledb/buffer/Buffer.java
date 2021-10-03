@@ -4,7 +4,7 @@ import simpledb.file.*;
 import simpledb.log.LogMgr;
 
 /**
- * An individual buffer. A databuffer wraps a page 
+ * An individual buffer. A databuffer wraps a page
  * and stores information about its status,
  * such as the associated disk block,
  * the number of times the buffer has been pinned,
@@ -26,7 +26,7 @@ public class Buffer {
       this.lm = lm;
       contents = new Page(fm.blockSize());
    }
-   
+
    public Page contents() {
       return contents;
    }
@@ -54,7 +54,7 @@ public class Buffer {
    public boolean isPinned() {
       return pins > 0;
    }
-   
+
    public int modifyingTx() {
       return txnum;
    }
@@ -72,7 +72,7 @@ public class Buffer {
       fm.read(blk, contents);
       pins = 0;
    }
-   
+
    /**
     * Write the buffer to its disk block if it is dirty.
     */
@@ -80,6 +80,7 @@ public class Buffer {
       if (txnum >= 0) {
          lm.flush(lsn);
          fm.write(blk, contents);
+         BufferMgr.discWrites++;
          txnum = -1;
       }
    }

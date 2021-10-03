@@ -4,11 +4,25 @@ import simpledb.server.SimpleDB;
 import simpledb.file.*;
 
 public class BufferMgrTest {
-   public static void main(String[] args) throws Exception {
-      SimpleDB db = new SimpleDB("buffermgrtest", 400, 3); // only 3 buffers
-      BufferMgr bm = db.bufferMgr();
 
-      Buffer[] buff = new Buffer[6]; 
+   static void mruTest(BufferMgr bm) {
+      Buffer[] buff = new Buffer[6];
+      for (int i = 0; i < 3; i++) {
+         buff[i] = bm.pin(new BlockId("testfile", i + 1));
+      }
+      bm.unpin(buff[0]);
+      bm.unpin(buff[1]);
+      bm.pin(new BlockId("testfile", 4));
+      bm.pin(new BlockId("testfile", 5));
+      for (int i=0; i<buff.length; i++) {
+         Buffer b = buff[i];
+         if (b != null)
+            System.out.println("buff["+i+"] pinned to block " + b.block());
+      }
+   }
+
+   static void basicTest(BufferMgr bm){
+      Buffer[] buff = new Buffer[6];
       buff[0] = bm.pin(new BlockId("testfile", 0));
       buff[1] = bm.pin(new BlockId("testfile", 1));
       buff[2] = bm.pin(new BlockId("testfile", 2));
@@ -29,8 +43,15 @@ public class BufferMgrTest {
       System.out.println("Final Buffer Allocation:");
       for (int i=0; i<buff.length; i++) {
          Buffer b = buff[i];
-         if (b != null) 
+         if (b != null)
             System.out.println("buff["+i+"] pinned to block " + b.block());
       }
+   }
+
+   public static void main(String[] args) throws Exception {
+      SimpleDB db = new SimpleDB("buffermgrtest", 400, 3); // only 3 buffers
+      BufferMgr bm = db.bufferMgr();
+      // basicTest(bm);
+      mruTest(bm);
    }
 }

@@ -10,11 +10,14 @@ import java.sql.*;
 import java.util.*;
 
 public class BufferMgrProfiling {
-
+    
+    final static int BLOCK_SIZE = 50;
+    final static int BUF_SIZE = 3;
+    
     public static Result createTableTest(int n, boolean mode) throws SQLException {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
-        Connection conn = d.connect(url, null);
+        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -45,7 +48,7 @@ public class BufferMgrProfiling {
     public static Result joinTableTest(int n, boolean mode) throws SQLException {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
-        Connection conn = d.connect(url, null);
+        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -84,6 +87,7 @@ public class BufferMgrProfiling {
 
         bm.hits = 0;
         bm.misses = 0; // Resetting to only observe count during join
+        BufferMgr.discWrites = 0;
 
         s = "select SId, SFirstName, SLastName, MId, MajorName, MajorAbbr " +
                 "from STUDENT, MAJOR " +
@@ -103,7 +107,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, null);
+        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -130,6 +134,7 @@ public class BufferMgrProfiling {
 
         bm.hits = 0;
         bm.misses = 0; // Resetting to only observe count during join
+        BufferMgr.discWrites = 0;
 
         s = "select SId, SFirstName, SLastName, MajorId " +
                 "from STUDENT";
@@ -147,7 +152,7 @@ public class BufferMgrProfiling {
     public static Result largeJoinTableTest(int n, boolean mode) throws SQLException {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
-        Connection conn = d.connect(url, null);
+        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -201,6 +206,7 @@ public class BufferMgrProfiling {
 
         bm.hits = 0;
         bm.misses = 0; // Resetting to only observe count during join
+        BufferMgr.discWrites = 0;
 
         s = "select SId, SFirstName, SLastName, MId, MajorName, MajorAbbr, IID, IFirstName, ILastName, DeptID " +
                 "from STUDENT, MAJOR, INSTRUCTOR " +
@@ -220,7 +226,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, null);
+        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -247,6 +253,7 @@ public class BufferMgrProfiling {
 
         bm.hits = 0;
         bm.misses = 0; // Resetting to only observe count during join
+        BufferMgr.discWrites = 0;
 
         for (int i = 0; i < n * 0.75; i++) {
             String cmd = "update STUDENT "
@@ -263,7 +270,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, null);
+        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -290,6 +297,7 @@ public class BufferMgrProfiling {
 
         bm.hits = 0;
         bm.misses = 0; // Resetting to only observe count during join
+        BufferMgr.discWrites = 0;
 
         for (int i = 0; i < n * 0.25; i++) {
             int index = rand.nextInt(names.size());
@@ -312,7 +320,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, null);
+        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -355,6 +363,7 @@ public class BufferMgrProfiling {
 
         bm.hits = 0;
         bm.misses = 0; // Resetting to only observe count during random tests now
+        BufferMgr.discWrites = 0;
 
         int id = 0;
         String cmd = "";
@@ -424,7 +433,7 @@ public class BufferMgrProfiling {
      */
     public static void createTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter("createTable.csv");
-        pw.println("mode,n,hits,misses,total");
+        pw.println("mode,n,hits,misses,total,writes");
         for (int n : nExperiments) {
             pw.println(createTableTest(n, true).toString("MRU", n));
             pw.println(createTableTest(n, false).toString("default", n));
@@ -438,7 +447,7 @@ public class BufferMgrProfiling {
      */
     public static void joinTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter("joinTable.csv");
-        pw.println("mode,n,hits,misses,total");
+        pw.println("mode,n,hits,misses,total,writes");
         for (int n : nExperiments) {
             pw.println(joinTableTest(n, true).toString("MRU", n));
             pw.println(joinTableTest(n, false).toString("default", n));
@@ -452,7 +461,7 @@ public class BufferMgrProfiling {
      */
     public static void selectTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter("selectTable.csv");
-        pw.println("mode,n,hits,misses,total");
+        pw.println("mode,n,hits,misses,total,writes");
         for (int n : nExperiments) {
             pw.println(selectTableTest(n, true).toString("MRU", n));
             pw.println(selectTableTest(n, false).toString("default", n));
@@ -466,7 +475,7 @@ public class BufferMgrProfiling {
      */
     public static void largeJoinTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter("largeJoinTable.csv");
-        pw.println("mode,n,hits,misses,total");
+        pw.println("mode,n,hits,misses,total,writes");
         for (int n : nExperiments) {
             pw.println(largeJoinTableTest(n, true).toString("MRU", n));
             pw.println(largeJoinTableTest(n, false).toString("default", n));
@@ -479,7 +488,7 @@ public class BufferMgrProfiling {
      */
     public static void updateTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter("updateTable.csv");
-        pw.println("mode,n,hits,misses,total");
+        pw.println("mode,n,hits,misses,total,writes");
         for (int n : nExperiments) {
             pw.println(updateTableTest(n, true).toString("MRU", n));
             pw.println(updateTableTest(n, false).toString("default", n));
@@ -492,7 +501,7 @@ public class BufferMgrProfiling {
      */
     public static void deleteFromTableTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter("deleteFromTable.csv");
-        pw.println("mode,n,hits,misses,total");
+        pw.println("mode,n,hits,misses,total,writes");
         for (int n : nExperiments) {
             pw.println(deleteFromTableTest(n, true).toString("MRU", n));
             pw.println(deleteFromTableTest(n, false).toString("default", n));
@@ -505,7 +514,7 @@ public class BufferMgrProfiling {
      */
     public static void randomizedTests() throws FileNotFoundException, SQLException {
         PrintWriter pw = new PrintWriter("randomTests.csv");
-        pw.println("mode,n,hits,misses,total");
+        pw.println("mode,n,hits,misses,total,writes");
         for (int n : nExperiments) {
             pw.println(randomizedTest(n, true).toString("MRU", n));
             pw.println(randomizedTest(n, false).toString("default", n));
@@ -515,12 +524,12 @@ public class BufferMgrProfiling {
 
     public static void main(String[] args) {
         try {
-//            createTableTests();
-//            joinTableTests();
-//            selectTableTests();
-//            largeJoinTableTests();
-//            updateTableTests();
-//            deleteFromTableTests();
+            createTableTests();
+            joinTableTests();
+            selectTableTests();
+            largeJoinTableTests();
+            updateTableTests();
+            deleteFromTableTests();
             randomizedTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
@@ -533,15 +542,17 @@ public class BufferMgrProfiling {
         int hits;
         int misses;
         int total;
+        int discWrites;
 
         public Result(int hits, int misses) {
             this.hits = hits;
             this.misses = misses;
             this.total = hits + misses;
+            this.discWrites = BufferMgr.discWrites;
         }
 
         public String toString(String expName, int n) {
-            return String.format("%s,%d,%d,%d,%d", expName, n, hits, misses, total);
+            return String.format("%s,%d,%d,%d,%d,%d", expName, n, hits, misses, total, discWrites);
         }
 
         @Override

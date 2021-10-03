@@ -25,6 +25,12 @@ public class EmbeddedDriver extends DriverAdapter {
       return new EmbeddedConnection(db);
    }
 
+   public EmbeddedConnection connect(String url, int blockSize, int buffSize, Properties p) throws SQLException {
+      String dbname = url.replace("jdbc:simpledb:", "");
+      this.db = new SimpleDB(dbname, blockSize, buffSize);
+      return new EmbeddedConnection(db);
+   }
+
    public SimpleDB getDb() {
       return db;
    }
