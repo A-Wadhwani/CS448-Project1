@@ -3,26 +3,23 @@ package simpledb.buffer;
 import simpledb.jdbc.embedded.EmbeddedDriver;
 import simpledb.server.SimpleDB;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.*;
 import java.util.*;
 
 public class BufferMgrProfiling {
-    
-    final static int BLOCK_SIZE = 50;
-    final static int BUF_SIZE = 3;
-    
+
     public static Result createTableTest(int n, boolean mode) throws SQLException {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
-        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
+        Connection conn = d.connect(url, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
         SimpleDB db = d.getDb();
         BufferMgr bm = db.bufferMgr();
+
         bm.setMode(mode);
 
         String s = "create table STUDENT(SId int, SFirstName varchar(40), SLastName varchar(40), MajorId int, GradYear int)";
@@ -48,7 +45,7 @@ public class BufferMgrProfiling {
     public static Result joinTableTest(int n, boolean mode) throws SQLException {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
-        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
+        Connection conn = d.connect(url, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -107,7 +104,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
+        Connection conn = d.connect(url, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -152,7 +149,7 @@ public class BufferMgrProfiling {
     public static Result largeJoinTableTest(int n, boolean mode) throws SQLException {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9); //Makes new database each time
-        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
+        Connection conn = d.connect(url, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -226,7 +223,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
+        Connection conn = d.connect(url, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -270,7 +267,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
+        Connection conn = d.connect(url, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -320,7 +317,7 @@ public class BufferMgrProfiling {
         EmbeddedDriver d = new EmbeddedDriver();
         String url = "jdbc:simpledb:studentdb" + UUID.randomUUID().toString().substring(9);
         //Makes new database each time
-        Connection conn = d.connect(url, BLOCK_SIZE, BUF_SIZE, null);
+        Connection conn = d.connect(url, null);
         Statement stmt = conn.createStatement();
 
         // Debugging Setup
@@ -524,13 +521,13 @@ public class BufferMgrProfiling {
 
     public static void main(String[] args) {
         try {
-            createTableTests();
-            joinTableTests();
+ //           createTableTests();
+ //           joinTableTests();
             selectTableTests();
-            largeJoinTableTests();
+ //           largeJoinTableTests();
             updateTableTests();
-            deleteFromTableTests();
-            randomizedTests();
+//            deleteFromTableTests();
+//            randomizedTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
         }
