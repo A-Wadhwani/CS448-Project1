@@ -87,8 +87,13 @@ public class BufferMgr {
                     modifiedPool.add(buff);
                 else
                     unmodifiedPool.add(buff);
-                assert unmodifiedPool.size() <= bufferpool.length;
-                assert modifiedPool.size() <= bufferpool.length; // Sanity checking myself.
+                if (unmodifiedPool.size() > bufferpool.length + 1) {
+                    bufferpool[100000] = null;
+                }
+                if (modifiedPool.size() > bufferpool.length + 1) {
+                    bufferpool[100000] = null;
+                }
+                // Sanity checking myself.
             } else {
                 numAvailable++;
             }
@@ -148,10 +153,8 @@ public class BufferMgr {
         }
         if (!buff.isPinned()) {
             if (isMRU) {
-                if (buff.isModified())
-                    modifiedPool.remove(buff); // Perhaps make previous element null for debugging
-                else
-                    unmodifiedPool.remove(buff);
+                modifiedPool.remove(buff); // Perhaps make previous element null for debugging
+                unmodifiedPool.remove(buff);
             } else {
                 numAvailable--;
             }

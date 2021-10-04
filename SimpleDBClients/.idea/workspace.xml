@@ -6,7 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="380b690f-0f8e-45f8-95cf-3f25b2150971" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/buffermgrtest/testfile" beforeDir="false" afterPath="$PROJECT_DIR$/buffermgrtest/testfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgr.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgr.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrProfiling.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrProfiling.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgrTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -51,7 +52,7 @@
     <property name="project.structure.side.proportion" value="0.0" />
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
   </component>
-  <component name="RunManager" selected="Application.BufferMgrTest">
+  <component name="RunManager" selected="Application.BufferMgrProfiling">
     <configuration name="BufferMgrProfiling" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="simpledb.buffer.BufferMgrProfiling" />
       <module name="SimpleDBEngine" />
@@ -91,21 +92,23 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="ArquillianJUnit" factoryName="" nameIsGenerated="true">
+    <configuration default="true" type="ArquillianTestNG" factoryName="" nameIsGenerated="true">
       <option name="arquillianRunConfiguration">
         <value>
           <option name="containerStateName" value="" />
         </value>
       </option>
-      <option name="TEST_OBJECT" value="class" />
+      <option name="TEST_OBJECT" value="CLASS" />
+      <properties />
+      <listeners />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.BufferMgrTest" />
         <item itemvalue="Application.BufferMgrProfiling" />
+        <item itemvalue="Application.BufferMgrTest" />
         <item itemvalue="Application.CreateStudentDB" />
       </list>
     </recent_temporary>
@@ -122,6 +125,7 @@
       <workItem from="1633109655558" duration="8631000" />
       <workItem from="1633200801323" duration="538000" />
       <workItem from="1633209847082" duration="13538000" />
+      <workItem from="1633363178791" duration="4845000" />
     </task>
     <servers />
   </component>

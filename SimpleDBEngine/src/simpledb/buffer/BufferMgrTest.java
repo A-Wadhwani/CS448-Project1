@@ -10,7 +10,6 @@ public class BufferMgrTest {
         System.out.println("\n\n---- MRU BASIC TEST ----\n\n");
         SimpleDB db = new SimpleDB("buffermgrtest", 400, 5); // only 3 buffers
         BufferMgr bm = db.bufferMgr();
-        bm.setMode(false);
 
         Buffer[] buff = new Buffer[5];
         for (int i = 0; i < 5; i++) {
