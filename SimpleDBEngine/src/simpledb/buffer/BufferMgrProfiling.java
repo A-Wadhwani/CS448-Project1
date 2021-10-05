@@ -330,7 +330,7 @@ public class BufferMgrProfiling {
         stmt.executeUpdate(s);
         System.out.println("Table STUDENT created.");
 
-        ArrayList<Name> names = Name.generateNames(3 * n);
+        ArrayList<Name> names = Name.generateNames(2000);
 
         s = "insert into STUDENT(SId, SFirstName, SLastName, MajorId, GradYear) values ";
         String[] studvals = new String[n];
@@ -365,7 +365,7 @@ public class BufferMgrProfiling {
         int id = 0;
         String cmd = "";
 
-        for (int i = 0; i < 2 * n; i++) {
+        for (int i = 0; i < 200 ; i++) {
             switch (rand.nextInt(5)) {
                 case 0: // Insertion
                     s = "insert into STUDENT(SId, SFirstName, SLastName, MajorId, GradYear) values " +
@@ -521,12 +521,12 @@ public class BufferMgrProfiling {
 
     public static void main(String[] args) {
         try {
-            createTableTests();
-            joinTableTests();
-            selectTableTests();
-            largeJoinTableTests();
-            updateTableTests();
-            deleteFromTableTests();
+//            createTableTests();
+//            joinTableTests();
+//            selectTableTests();
+//            largeJoinTableTests();
+//            updateTableTests();
+//            deleteFromTableTests();
             randomizedTests();
         } catch (SQLException | FileNotFoundException throwables) {
             throwables.printStackTrace();
