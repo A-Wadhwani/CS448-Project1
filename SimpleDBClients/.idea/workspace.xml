@@ -5,15 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="380b690f-0f8e-45f8-95cf-3f25b2150971" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../README.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/createTable.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/deleteFromTable.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/joinTable.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/largeJoinTable.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/randomTests.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/selectTable.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/updateTable.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgr.java" beforeDir="false" afterPath="$PROJECT_DIR$/../SimpleDBEngine/src/simpledb/buffer/BufferMgr.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -132,7 +125,7 @@
       <workItem from="1633209847082" duration="13538000" />
       <workItem from="1633363178791" duration="4845000" />
       <workItem from="1633406433753" duration="1703000" />
-      <workItem from="1633439569935" duration="8971000" />
+      <workItem from="1633439569935" duration="10301000" />
     </task>
     <servers />
   </component>
