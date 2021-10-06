@@ -1,5 +1,6 @@
 # CS44800 Project 1
 ## Aryan Wadhwani (wadhwani@purdue.edu)
+## Teammate - Shayne Marques
 
 ## Implementation Notes
  - I used `txnum >= 0` to determine whether a buffer was in either array. To implement assertions in some portions of the code, I added `bufferpool[10000] = 0`, to ensure a crash occurs. 
